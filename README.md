@@ -5,7 +5,7 @@ The goal of this repository is to build a package to scrape game data for 1830 g
 1. An attribute recording the list of players in the game in initial turn order.
 2. Methods that record the distribution of privates, the player with priority in stock round 1 and the final player scores. 
 
-**Upcoming FeaturesL:**
+**Upcoming Features:**
 
 Here are some features that are planned to be added to this scraper:
 
