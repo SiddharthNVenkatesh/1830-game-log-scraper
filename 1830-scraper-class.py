@@ -9,6 +9,13 @@ This script aims to construct a class with  methods for scraping and storing dat
 """
 
 import requests
+import pathlib
+import bs4
+import pandas as pd
+
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver import Firefox
+from selenium.webdriver.firefox.options import Options
 
 
 class Scraper1830(object):
@@ -24,6 +31,9 @@ class Scraper1830(object):
         self.api = api_url + self.id
         # Json file consisting of the players, results and game actions.
         self.log = requests.get(self.api).json()
+        
+        #URL for finished game page
+        self.url = "https://18xx.games/game/" + self.id
        
         # Game Title
         self.title = self.log['title']
@@ -105,7 +115,83 @@ class Scraper1830(object):
         result = self.log['result']
         
         return result
+    
+    
+    def get_player_history(self):
+         """
+         This function takes a scraper and returns a dictionary with keys strings representing player names and round numbers and values
+          representing the player names and their scores at the end of each round.
+
+         """
+         
+         def start_firefox_driver():
+             """
+             This function loads a headless copy of Firefox in Python. It is needed to load the javascript on a webpage to scrape 
+              html output.
+             """
+             options = Options()
+             options.add_argument("-headless")
+             firefox = Firefox(options=options)
+             return firefox    
+    
+         def ready(driver):
+             """
+             Driver is a firefox driver loaded via Selenium. This function tests that a particular table "player_table" has 
+             loaded on self.url and returns a boolean (true if the table has loaded and false if not).
+
+             """
+             return driver.execute_script("return !!document.querySelector('#player_or_history');")
         
+         print("Firefox Driver Loading:")
+         
+         # Initialize driver
+         firefox = start_firefox_driver()
+         
+         print("Driver loaded, loading game page:")
+         
+         # Get the page on self.url
+         firefox.get(self.url)
+         # Wait till the javascript on the page runs and loads the tables.
+         WebDriverWait(firefox, 5).until(ready)
+         # Grab the body of the game page
+         html_string = firefox.execute_script("return document.body.outerHTML")
+         
+         print("Page loaded, parsing html")
+         
+         # Use Beautiful Soup to parse the html.
+         soup = bs4.BeautifulSoup(html_string, 'lxml')
+         
+         # Write entries into a dictionary
+         dictionary = {}
+         # Find the table containing the player names.
+         table = soup.select('#player_table')[0]
+         # Find the player names and write them to the dictionary
+         names = [entry.get_text() for entry in table.find_all('th', {'class': 'name nowrap'})]
+         dictionary['player_order'] = names
+         # Find the table containing the player score history
+         score_table = soup.select('#player_or_history')[0]
+         # Enter the player scores into the dictionary
+         for row in score_table.children:
+             if isinstance(row, bs4.NavigableString):
+                 continue
+             else:
+                 key = row.select('th')[0].get_text()
+                 value = [c.get_text() for c in row.select('td')]
+                 dictionary[key] = value
+        
+        
+         return dictionary
+     
+    def player_history_table(self):
+         """
+         Returns the result from get_player_history as a pandas dataframe with the keys as the row index.
+
+         """
+         dictionary = self.get_player_history()
+         
+         return pd.DataFrame.from_dict(dictionary, orient='index')
+     
+    
     
             
 
@@ -125,6 +211,9 @@ def test1(): #test the class on game number 60001. test comparisons are obtained
         
         assert scraper.log['result']['JoonGloom']==1524
         
+        print(scraper.get_player_history())
+        
+        print(scraper.player_history_table())
         
         
 test1()
