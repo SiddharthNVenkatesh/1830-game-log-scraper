@@ -8,10 +8,11 @@ Created on Mon Oct 25 15:22:10 2021
 This script aims to construct a class with  methods for scraping and storing data from the 18xx.games api for 1830 games.
 """
 
-import requests
-import pathlib
+import requests 
 import bs4
 import pandas as pd
+from matplotlib import pyplot as plt
+import seaborn as sns
 
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver import Firefox
@@ -40,14 +41,15 @@ class Scraper1830(object):
         
         #Raise error if game id belongs to a game not in scope of scraper
         if self.title !='1830':
-            raise TypeError('Game ID must belong to a finished 1830 game, the scraper is not designed for other games or unfinished games.')
+            raise ValueError('Game ID must belong to a finished 1830 game, the scraper is not designed for other games or unfinished games.')
         
         # List of the privates in increasing order of base price.
         self.privates = ['SV', 'CS', 'DH', 'MH', 'CA', 'BO']
         
         # List of players in initial turn order
-        
         self.players = self.log['players']
+        self.player_count = len(self.log['players'])
+        
         
         
     def get_player_dict(self):
@@ -61,9 +63,21 @@ class Scraper1830(object):
         
         return players
     
+    def get_initial_player_order(self):
+        """
+        This functions takes a scraper and returns a list of player ids ordered based on the initial turn order of the game.
+
+        """
+        order_list = []
+        for i in range(0, self.player_count):
+            order_list.append(self.get_player_dict()[self.log['actions'][i]['user']])
+        
+        return order_list
+        
+    
     def get_private_auction(self):
         """
-        This function takes a scraper, parses the log and returns a dictionary whose keys are the 
+        This function takes a scraper and returns a dictionary whose keys are the 
          private companies in the game and whose values are tuples (player name string, int representing price paid).
 
 
@@ -83,6 +97,23 @@ class Scraper1830(object):
         
         return prices
     
+    def get_remaining_cash(self):
+        """
+        This function uses the get_private_auction function to compute the cash remaining for each player after the auction. 
+         It returns a dictionary with keys = player name strings and values = cash remaining as integer.
+
+        """
+        cash = {}
+        # Initialize the cash dictionary.
+        for player in self.get_initial_player_order():
+            cash[player] = 2400/self.player_count
+        # Iterate over the get_private_auction dictionary to compute remaining cash.
+        for entry in self.get_private_auction().values():
+            cash[entry[0]] = cash[entry[0]] - entry[1]
+        
+        
+        return cash
+    
     def get_priority(self):
         """
         This function takes a scraper and returns the player name string of the player who had priority in stock round 1. 
@@ -98,7 +129,6 @@ class Scraper1830(object):
             else: 
                 action_counter +=1
                 break
-        print(action_counter)
         
         priority_id = self.log['actions'][action_counter]['entity']      
         
@@ -192,6 +222,54 @@ class Scraper1830(object):
          return pd.DataFrame.from_dict(dictionary, orient='index')
      
     
+    def plot_player_history(self):
+        """
+        This function returns a lineplot of the player score history.
+
+
+        """
+        
+        
+        # Styling via seaborn
+        sns.set_theme()
+        sns.set(rc={"figure.dpi":300, 'savefig.dpi':300})
+        sns.set_style('ticks')
+
+        
+        # Color choices
+        colors = ['tab:blue', "tab:orange", "tab:red", "tab:purple", "tab:pink", "tab:gray"]
+        
+        # Reverse the player history dataframe so it follows in increasing order of round number.
+        full_data = self.player_history_table()
+        data = self.player_history_table()[1:]
+        data = data[::-1]
+        
+        # Cleaning up the data dataframe by converting strings representing scores to integers.
+        data = data.applymap(lambda x: int(x.strip('$')))
+        print(data)
+        
+        # The x-variable are the indices of the dataframe data.
+        x = data.index.values
+        
+        # Set the size of the plot
+        axs = plt.figure(figsize=(15, 15), dpi=1000)
+        
+        # We need to plot different y values for each player
+        for i in full_data.columns:
+            y = data.iloc[:, i]
+            plt.plot(x, y, color=colors[i], label = full_data.loc['player_order', i])
+            
+        plt.show()
+        axs.legend() #LABELS NOT WORKING - FIX
+        
+        
+        
+    # The last method is built to enable easy entry of the game state after the private auction as a row of a pandas dataframe. 
+    # This will be important for building a dataset and then running a classifier on it.
+        
+        
+     
+    
     
             
 
@@ -202,6 +280,8 @@ def test1(): #test the class on game number 60001. test comparisons are obtained
         assert scraper.api == 'https://18xx.games/api/game/60001'
         assert scraper.get_player_dict()[1903] == 'tango sucka'
         
+        print(scraper.get_initial_player_order())
+        
         print(scraper.get_priority())
         
         # assert scraper.get_priority() ==  'lilyh'
@@ -209,12 +289,18 @@ def test1(): #test the class on game number 60001. test comparisons are obtained
         assert scraper.get_private_auction() == {'DH': ('lilyh', 100), 'CS': ('JoonGloom', 45), 'MH': ('The Beerguard', 155), 
                                                  'CA': ('MiroungaExpress', 200), 'SV': ('JoonGloom', 20), 'BO': ('tango sucka', 220)}
         
+        print(scraper.get_remaining_cash())
+        
         assert scraper.log['result']['JoonGloom']==1524
         
         print(scraper.get_player_history())
         
         print(scraper.player_history_table())
         
+        scraper.plot_player_history()
+        
+        
         
 test1()
         
+
