@@ -1,5 +1,7 @@
-from scraper1830 import Scraper1830
+import sys
 import pytest
+sys.path.append("../scraper1830")
+from scraper1830 import Scraper1830
 
 
 @pytest.fixture()
