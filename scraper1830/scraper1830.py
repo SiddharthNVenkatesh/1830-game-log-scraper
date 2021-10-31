@@ -14,12 +14,10 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
 
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver import Firefox
-from selenium.webdriver.firefox.options import Options
 
 
-class Scraper1830(object):
+
+class Scraper1830:
     
     def __init__(self, ID):
         # ID is a string representing the game ID on 18xx.games
@@ -158,13 +156,18 @@ class Scraper1830(object):
          """
          if self.player_history:
              return self.player_history
-         
+         from selenium.webdriver.support.ui import WebDriverWait
+         from selenium.webdriver import Firefox
+         from selenium.webdriver.firefox.options import Options
+            
             
          def start_firefox_driver():
              """
              This function loads a headless copy of Firefox in Python. It is needed to load the javascript on a webpage to scrape 
               html output.
              """
+             
+             
              options = Options()
              options.add_argument("-headless")
              firefox = Firefox(options=options)
@@ -253,7 +256,7 @@ class Scraper1830(object):
         
         # Cleaning up the data dataframe by converting strings representing scores to integers.
         data = data.applymap(lambda x: int(x.strip('$')))
-        print(data)
+        
         
         # The x-variable are the indices of the dataframe data.
         x = data.index.values
@@ -265,21 +268,16 @@ class Scraper1830(object):
         for i in full_data.columns:
             y = data.iloc[:, i]
             plt.plot(x, y, color=colors[i], label = full_data.loc['player_order', i])
-            
-        plt.show()
-        axs.legend() #LABELS NOT WORKING - FIX
         
+        axs.legend()
         
+        plt.savefig(f'1830-{self.id}.png')
+        
+        return plt
         
     # The last method is built to enable easy entry of the game state after the private auction as a row of a pandas dataframe. 
     # This will be important for building a dataset and then running a classifier on it.
-        
-        
-     
-    
-scraper = Scraper1830('60001')
-scraper.plot_player_history()    
-            
+              
 
 
         
