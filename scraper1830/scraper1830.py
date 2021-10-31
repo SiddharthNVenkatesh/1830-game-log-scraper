@@ -277,7 +277,8 @@ class Scraper1830(object):
         
      
     
-    
+scraper = Scraper1830('60001')
+scraper.plot_player_history()    
             
 
 
