@@ -1,11 +1,17 @@
-**1830 Game Log Scraper:**
+# 1830 Game Log Scraper:
 
-The goal of this repository is to build a package to scrape game data for 1830 games from the 18xx.games api. This scraper is implemented as a class in the 1830-game-scraper python file. Here are the current features implemented in this class:
+The goal of this repository is to build a package to scrape game data for 1830 games from the 18xx.games api. 
+
+## Installation Instructions:
+
+`conda env create --file=environment.yml`
+
+## Implemented Features:
 
 1. An attribute recording the list of players in the game in initial turn order.
 2. Methods that record the distribution of privates, the player with priority in stock round 1 and the final player scores. 
 
-**Upcoming Features:**
+## Upcoming Features:
 
 Here are some features that are planned to be added to this scraper:
 
@@ -14,7 +20,9 @@ Here are some features that are planned to be added to this scraper:
 3. Graphical representations of the data.
 4. Representations of the data in a 2d pandas array.
 
-**Planned Applications of the Scraper:**
+
+
+## Planned Applications of the Scraper:
 
 There are two main applications in mind:
 
