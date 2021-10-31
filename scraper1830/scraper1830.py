@@ -50,6 +50,9 @@ class Scraper1830(object):
         self.players = self.log['players']
         self.player_count = len(self.log['players'])
         
+        # Attribute to record the player score history
+        self.player_history = None
+        
         
         
     def get_player_dict(self):
@@ -153,7 +156,10 @@ class Scraper1830(object):
           representing the player names and their scores at the end of each round.
 
          """
+         if self.player_history:
+             return self.player_history
          
+            
          def start_firefox_driver():
              """
              This function loads a headless copy of Firefox in Python. It is needed to load the javascript on a webpage to scrape 
@@ -209,6 +215,7 @@ class Scraper1830(object):
                  value = [c.get_text() for c in row.select('td')]
                  dictionary[key] = value
         
+         self.player_history = dictionary
         
          return dictionary
      
@@ -273,34 +280,6 @@ class Scraper1830(object):
     
             
 
-def test1(): #test the class on game number 60001. test comparisons are obtained by looking at the self.log json directly.
-    if __name__ == '__main__':
-        scraper = Scraper1830('60001')
-        assert scraper.id == '60001'
-        assert scraper.api == 'https://18xx.games/api/game/60001'
-        assert scraper.get_player_dict()[1903] == 'tango sucka'
-        
-        print(scraper.get_initial_player_order())
-        
-        print(scraper.get_priority())
-        
-        # assert scraper.get_priority() ==  'lilyh'
-        
-        assert scraper.get_private_auction() == {'DH': ('lilyh', 100), 'CS': ('JoonGloom', 45), 'MH': ('The Beerguard', 155), 
-                                                 'CA': ('MiroungaExpress', 200), 'SV': ('JoonGloom', 20), 'BO': ('tango sucka', 220)}
-        
-        print(scraper.get_remaining_cash())
-        
-        assert scraper.log['result']['JoonGloom']==1524
-        
-        print(scraper.get_player_history())
-        
-        print(scraper.player_history_table())
-        
-        scraper.plot_player_history()
-        
-        
-        
-test1()
+
         
 
