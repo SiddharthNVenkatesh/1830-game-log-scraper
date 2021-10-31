@@ -263,7 +263,7 @@ class Scraper1830:
         x = data.index.values
 
         # Set the size of the plot
-        axs = plt.figure(figsize=(15, 15), dpi=1000)
+        axs = plt.figure(figsize=(20, 20), dpi=1000)
 
         # We need to plot different y values for each player
         for i in full_data.columns:
